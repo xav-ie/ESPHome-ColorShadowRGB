@@ -47,44 +47,33 @@ web_server:
   port: 80
   version: 3
 
-globals:
-  - id: effect_type
-    type: int
-    initial_value: '0'
-
 binary_sensor:
   - platform: gpio
     pin:
       number: ${button_pin}
       inverted: true
-    id: switch_0
+    id: button
     internal: true
-    on_double_click:
-    - min_length: 50ms
-      max_length: 750ms
-      then:
-        - light.toggle: rgb_led
-    on_press:
-      then:
-        - lambda: |-
-            id(effect_type) += 1;
-            auto call = id(rgb_led).turn_on();
-            switch(id(effect_type)) {
-              case 1:
-                call.set_effect("pulse");
-                break;
-              case 2:
-                call.set_effect("random");
-                break;
-              case 3:
-                call.set_effect("flicker");
-                break;
-              default:
-                id(effect_type) = 0;
-                call.set_effect("None");
-                break;
-            }
-            call.perform();
+    filters:
+      - delayed_on_off: 10ms
+    on_click:
+      - min_length: 50ms
+        max_length: 600ms
+        then:
+          - light.toggle: rgb_led
+    on_multi_click:
+      # Fires while still held, so the effect changes without letting go.
+      - timing:
+          - ON for at least 800ms
+        then:
+          - lambda: |-
+              // Step to the effect after the one running now (None, pulse,
+              // random, flicker, then None again). From off, start at the first.
+              auto *light = id(rgb_led);
+              uint32_t next = 1;
+              if (light->remote_values.is_on())
+                next = (light->get_current_effect_index() + 1) % (light->get_effect_count() + 1);
+              light->turn_on().set_effect(next).perform();
 
 sensor:
   - platform: adc
