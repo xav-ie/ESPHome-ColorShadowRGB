@@ -19,6 +19,17 @@ substitutions:
   # here, and zero still means off.
   led_min_power: 0.4%
 
+  # Knob ADC voltage at the zero end and at the full end of its travel.
+  # Readings at or below knob_raw_zero are off.
+  knob_raw_zero: "0.02"
+  knob_raw_full: "0.85"
+  # A resting knob only takes over the light once it moves this far (0 to 1)
+  # within knob_settle_ms; slower drift and noise are ignored.
+  knob_turn_threshold: "0.04"
+  # While turning, changes this small still follow the knob.
+  knob_follow_step: "0.01"
+  # A turn ends after this long without movement.
+  knob_settle_ms: "1000"
 
 esp32:
   board: esp32-c3-devkitm-1
@@ -26,6 +37,9 @@ esp32:
     type: esp-idf
 
 logger:
+  logs:
+    # The knobs are sampled 25 times a second; keep their readings out of the log.
+    sensor: INFO
 
 captive_portal:
 
@@ -75,55 +89,104 @@ binary_sensor:
 sensor:
   - platform: adc
     pin: ${red_knob_pin}
-    id: set_red
+    id: red_knob
     internal: true
-    update_interval: 0.1s
-    filters:
-      - delta: 0.01
-      - calibrate_linear:
-          - 0.0 -> 0.12
-          - 0.85 -> 1.0
-    on_value:
-      then:
-        # This is not working yet. set_red() assign the *percentage*, need to figure out how to set absolute
-        #        - lambda: |-
-        #            id(rgb_led).make_call().set_red(x).perform();
-        - light.control:
-            id: rgb_led
-            red: !lambda "return x;"
-
+    update_interval: 40ms
+    samples: 4
+    filters: &knob_filters
+      - median:
+          window_size: 5
+          send_every: 1
+          send_first_at: 1
+      # 0 to 1 across the knob's travel, with a flat zero at the off end.
+      - lambda: |-
+          return clamp((x - ${knob_raw_zero}f) / (${knob_raw_full}f - ${knob_raw_zero}f), 0.0f, 1.0f);
   - platform: adc
     pin: ${green_knob_pin}
-    id: set_green
+    id: green_knob
     internal: true
-    update_interval: 0.1s
-    filters:
-      - delta: 0.01
-      # The leds don't turn on until about 40/255 (15%) so adjust the range
-      - calibrate_linear:
-          - 0.0 -> 0.15
-          - 0.85 -> 1.0
-    on_value:
-      then:
-        - light.control:
-            id: rgb_led
-            green: !lambda "return x;"
-
+    update_interval: 40ms
+    samples: 4
+    filters: *knob_filters
   - platform: adc
     pin: ${blue_knob_pin}
-    id: set_blue
+    id: blue_knob
     internal: true
-    update_interval: 0.1s
-    filters:
-      - delta: 0.01
-      - calibrate_linear:
-          - 0.0 -> 0.12
-          - 0.85 -> 1.0
-    on_value:
-      then:
-        - light.control:
-            id: rgb_led
-            blue: !lambda "return x;"
+    update_interval: 40ms
+    samples: 4
+    filters: *knob_filters
+
+interval:
+  - interval: 40ms
+    then:
+      - lambda: |-
+          // The knobs set each LED's absolute level. They only drive the light
+          // during a deliberate turn, so whatever set the light last (a knob,
+          // the button or Home Assistant) stays until the next deliberate input.
+          static bool ready = false;
+          static bool turning = false;
+          static float anchor[3];
+          static float sent[3];
+          static uint32_t anchor_ms = 0;
+          static uint32_t moved_ms = 0;
+          static LightColorValues written;
+
+          const float knob[3] = {id(red_knob).state, id(green_knob).state, id(blue_knob).state};
+          for (float k : knob)
+            if (std::isnan(k))
+              return;
+          const uint32_t now = millis();
+          auto *light = id(rgb_led);
+
+          auto rest = [&]() {
+            turning = false;
+            anchor_ms = now;
+            for (int i = 0; i < 3; i++)
+              anchor[i] = knob[i];
+          };
+          // At boot the light keeps its restored state; the knobs wait to be turned.
+          if (!ready) {
+            ready = true;
+            rest();
+            return;
+          }
+          // Something else changed the light mid turn; it wins until the knobs move again.
+          if (turning && light->remote_values != written)
+            rest();
+
+          bool moved = false;
+          for (int i = 0; i < 3; i++) {
+            if (turning)
+              moved |= fabsf(knob[i] - sent[i]) >= ${knob_follow_step}f;
+            else
+              moved |= fabsf(knob[i] - anchor[i]) >= ${knob_turn_threshold}f;
+          }
+          if (!moved) {
+            // Re-anchor at rest, so slow drift never adds up to a turn.
+            if (now - (turning ? moved_ms : anchor_ms) >= ${knob_settle_ms})
+              rest();
+            return;
+          }
+          turning = true;
+          moved_ms = now;
+          for (int i = 0; i < 3; i++)
+            sent[i] = knob[i];
+
+          // An effect would keep overriding the knobs, so stop it first.
+          if (light->get_current_effect_index() != 0)
+            light->make_call().set_effect(uint32_t{0}).perform();
+
+          // RGB lights keep the brightest channel at 100% and carry the overall
+          // level as brightness, so split the three absolute levels that way.
+          const float level = std::max({knob[0], knob[1], knob[2]});
+          auto call = level > 0.0f ? light->turn_on() : light->turn_off();
+          call.set_transition_length(0);
+          if (level > 0.0f) {
+            call.set_rgb(knob[0] / level, knob[1] / level, knob[2] / level);
+            call.set_brightness(level);
+          }
+          call.perform();
+          written = light->remote_values;
 
 light:
   - platform: rgb
