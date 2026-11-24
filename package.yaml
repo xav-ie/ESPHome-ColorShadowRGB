@@ -3,7 +3,8 @@
 # api, ota and wifi (see colorshadowrgb.yaml). Override any substitution below
 # from the device config.
 substitutions:
-  # Which GPIO drives which LED, and which knob reads which ADC pin.
+  # Which GPIO drives which LED (verified on a lamp), and which knob reads
+  # which ADC pin.
   red_pin: GPIO7
   green_pin: GPIO6
   blue_pin: GPIO5

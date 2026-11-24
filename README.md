@@ -31,7 +31,7 @@ packages:
 - At boot the light restores its last state (off by default); the knobs wait to be turned.
 
 ## Pins and outputs
-All pins are substitutions at the top of `package.yaml`, so a lamp wired differently is a one line override in the device config:
+The LED pins below are verified on a lamp (pure red, green and blue each showed their own colour). All pins are substitutions at the top of `package.yaml`, so a lamp wired differently is a one line override in the device config:
 
 ```yaml
 substitutions:
@@ -51,7 +51,7 @@ Each LED output is a 1220 Hz LEDC channel with:
 - The effect cycle kept its own counter, which went out of step with effects set from Home Assistant or restored at boot. It now steps from the running effect.
 - The knobs set percentages: the light renormalized the brightest channel to 100%, so a knob could not dim its LED. They now set absolute levels.
 - A knob at zero still sent 12 to 15% and never turned its LED off. Zero is now off; the LED turn on threshold is handled at the output.
-- ADC noise could write over a colour just set from Home Assistant, and every boot overwrote the restored colour with the knob positions. Knobs now only act on a deliberate turn.
+- ADC noise could write over a colour just set from Home Assistant, and every boot overwrote the restored colour with the knob positions. With every knob at zero, one noise reading on blue after Home Assistant set pure blue wrote the green and blue floors, which normalized to a green cyan. Knobs now only act on a deliberate turn.
 - Every knob step started a fresh 1 s fade, so turning stuttered. Knob writes are now instant.
 - Effects kept overriding knob writes. A turn now stops the effect.
 
