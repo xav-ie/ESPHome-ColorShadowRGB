@@ -20,7 +20,7 @@ namespace esphome::colorshadow {
 enum class Scene {
   FIRE,
   CANDLE,
-  BREATHE,
+  PULSE,
   TWINKLE,
   WAVES,
   STORM,
@@ -189,8 +189,9 @@ inline void render(light::LightState &state, Scene scene, bool initial_run, floa
       }
       break;
     }
-    case Scene::BREATHE: {
-      // Base colour. A slow eased breath, each LED a little behind the last, so
+    case Scene::PULSE: {
+      // Base colour. A slow eased breath from near off up to the colour at the
+      // set brightness (never above it), each LED a little behind the last, so
       // the shadows ripple as it swells.
       for (int i = 0; i < 3; i++)
         rgb[i] = base[i] * (0.18f + 0.82f * swell(cycle(ms + 6000u - 300u * i, 6000)));

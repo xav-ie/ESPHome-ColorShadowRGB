@@ -50,7 +50,7 @@ Effects marked *base colour* take their colour from the light's colour in Home A
 
 - Fire (*base colour*): the flame flares as a whole while each LED flickers on its own, cooling to deeper, darker embers of the base hue and peaking in white tips. Orange or amber is a wood fire, blue or white an icy fire, purple a purple fire.
 - Candle (*base colour*): the same flame, calm: a slow sway, a faint flicker and now and then a gutter that dips it for a few seconds.
-- Breathe (*base colour*): a slow eased breath every 6 s, each LED a little behind the last so the shadows ripple.
+- Pulse (*base colour*): a slow eased breath every 6 s from near off up to the current colour at the current brightness, never above it, each LED a little behind the last so the shadows ripple.
 - Twinkle (*base colour*): a soft glow where each LED swells into its own sparkle now and then, the brightest glinting white.
 - Waves (*base colour*): slow swells drifting a little either side of the base hue; blue makes an ocean.
 - Storm (*base colour*): a dim rumbling sky in the base colour, struck every 4 to 18 s by one to three lightning flashes, each LED at its own strength so the shadows split.

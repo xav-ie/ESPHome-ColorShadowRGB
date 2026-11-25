@@ -213,9 +213,9 @@ light:
           update_interval: 20ms
           lambda: colorshadow::render(it, colorshadow::Scene::CANDLE, initial_run);
       - lambda:
-          name: Breathe
+          name: Pulse
           update_interval: 20ms
-          lambda: colorshadow::render(it, colorshadow::Scene::BREATHE, initial_run);
+          lambda: colorshadow::render(it, colorshadow::Scene::PULSE, initial_run);
       - lambda:
           name: Twinkle
           update_interval: 20ms
