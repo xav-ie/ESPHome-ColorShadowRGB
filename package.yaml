@@ -32,10 +32,20 @@ substitutions:
   # A turn ends after this long without movement.
   knob_settle_ms: "1000"
 
+  # Where the colorshadow component (transitions and effects) comes from.
+  # Set colorshadowrgb_ref to the same commit as the package's ref, so the YAML
+  # and the C++ always match.
+  colorshadowrgb_ref: main
+  colorshadowrgb_components: github://xav-ie/ESPHome-ColorShadowRGB@${colorshadowrgb_ref}
+
 esp32:
   board: esp32-c3-devkitm-1
   framework:
     type: esp-idf
+
+external_components:
+  - source: ${colorshadowrgb_components}
+    components: [colorshadow]
 
 logger:
   logs:
@@ -179,13 +189,17 @@ interval:
           written = light->remote_values;
 
 light:
-  - platform: rgb
+  # The rgb platform with colour transitions that swing round the hue circle
+  # (components/colorshadow). A transition of 0 is still an instant cut.
+  - platform: colorshadow
     name: "light"
     id: rgb_led
     red: output_red
     green: output_green
     blue: output_blue
     restore_mode: RESTORE_DEFAULT_OFF
+    default_transition_length: 1.5s
+    # The button's long press steps through these in order.
     effects:
       - pulse:
       - random:

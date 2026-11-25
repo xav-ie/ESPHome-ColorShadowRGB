@@ -1,14 +1,18 @@
 # Example device config for the rctestflight Color Shadow lamp. Everything
 # about the lamp lives in package.yaml; this file holds only the name, the
-# secrets and the package include. Pin ref to a commit for repeatable builds.
+# secrets and the package include. Pin colorshadowrgb_ref to a commit for
+# repeatable builds; it pins both the package and its C++ component.
 esphome:
   name: "colorshadowrgb"
   friendly_name: ColorShadowRGB
 
+substitutions:
+  colorshadowrgb_ref: main
+
 packages:
   colorshadowrgb:
     url: https://github.com/xav-ie/ESPHome-ColorShadowRGB
-    ref: main
+    ref: ${colorshadowrgb_ref}
     files: [package.yaml]
 
 api:
