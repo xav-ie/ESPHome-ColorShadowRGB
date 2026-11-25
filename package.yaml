@@ -32,6 +32,9 @@ substitutions:
   # A turn ends after this long without movement.
   knob_settle_ms: "1000"
 
+  # How long the Sunrise and Sunset effects take to ramp, in minutes.
+  ramp_minutes: "20"
+
   # Where the colorshadow component (transitions and effects) comes from.
   # Set colorshadowrgb_ref to the same commit as the package's ref, so the YAML
   # and the C++ always match.
@@ -78,8 +81,8 @@ binary_sensor:
           - ON for at least 800ms
         then:
           - lambda: |-
-              // Step to the effect after the one running now (None, pulse,
-              // random, flicker, then None again). From off, start at the first.
+              // Step to the effect after the one running now, in the order of
+              // the light's effects list, then None. From off, start at the first.
               auto *light = id(rgb_led);
               uint32_t next = 1;
               if (light->remote_values.is_on())
@@ -199,27 +202,44 @@ light:
     blue: output_blue
     restore_mode: RESTORE_DEFAULT_OFF
     default_transition_length: 1.5s
-    # The button's long press steps through these in order.
+    # The button's long press steps through these in order (components/colorshadow).
     effects:
-      - pulse:
-      - random:
-      - flicker:
-      - lambda:
-          name: Candle
-          update_interval: 20ms
-          lambda: colorshadow::render(it, colorshadow::Scene::CANDLE, initial_run);
       - lambda:
           name: Fire
           update_interval: 20ms
           lambda: colorshadow::render(it, colorshadow::Scene::FIRE, initial_run);
       - lambda:
-          name: Icy Fire
+          name: Candle
           update_interval: 20ms
-          lambda: colorshadow::render(it, colorshadow::Scene::ICY_FIRE, initial_run);
+          lambda: colorshadow::render(it, colorshadow::Scene::CANDLE, initial_run);
       - lambda:
-          name: Purple Fire
+          name: Breathe
           update_interval: 20ms
-          lambda: colorshadow::render(it, colorshadow::Scene::PURPLE_FIRE, initial_run);
+          lambda: colorshadow::render(it, colorshadow::Scene::BREATHE, initial_run);
+      - lambda:
+          name: Twinkle
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::TWINKLE, initial_run);
+      - lambda:
+          name: Waves
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::WAVES, initial_run);
+      - lambda:
+          name: Storm
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::STORM, initial_run);
+      - lambda:
+          name: Shadow Dance
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::SHADOW_DANCE, initial_run);
+      - lambda:
+          name: Rainbow
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::RAINBOW, initial_run);
+      - lambda:
+          name: Party
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::PARTY, initial_run);
       - lambda:
           name: Christmas
           update_interval: 20ms
@@ -229,21 +249,17 @@ light:
           update_interval: 20ms
           lambda: colorshadow::render(it, colorshadow::Scene::AURORA, initial_run);
       - lambda:
-          name: Ocean
+          name: TV Glow
           update_interval: 20ms
-          lambda: colorshadow::render(it, colorshadow::Scene::OCEAN, initial_run);
+          lambda: colorshadow::render(it, colorshadow::Scene::TV_GLOW, initial_run);
+      - lambda:
+          name: Sunrise
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::SUNRISE, initial_run, ${ramp_minutes} * 60.0f);
       - lambda:
           name: Sunset
           update_interval: 20ms
-          lambda: colorshadow::render(it, colorshadow::Scene::SUNSET, initial_run);
-      - lambda:
-          name: Lava
-          update_interval: 20ms
-          lambda: colorshadow::render(it, colorshadow::Scene::LAVA, initial_run);
-      - lambda:
-          name: Drift
-          update_interval: 20ms
-          lambda: colorshadow::render(it, colorshadow::Scene::DRIFT, initial_run);
+          lambda: colorshadow::render(it, colorshadow::Scene::SUNSET, initial_run, ${ramp_minutes} * 60.0f);
 
 output:
   - platform: ledc
