@@ -204,6 +204,46 @@ light:
       - pulse:
       - random:
       - flicker:
+      - lambda:
+          name: Candle
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::CANDLE, initial_run);
+      - lambda:
+          name: Fire
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::FIRE, initial_run);
+      - lambda:
+          name: Icy Fire
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::ICY_FIRE, initial_run);
+      - lambda:
+          name: Purple Fire
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::PURPLE_FIRE, initial_run);
+      - lambda:
+          name: Christmas
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::CHRISTMAS, initial_run);
+      - lambda:
+          name: Aurora
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::AURORA, initial_run);
+      - lambda:
+          name: Ocean
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::OCEAN, initial_run);
+      - lambda:
+          name: Sunset
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::SUNSET, initial_run);
+      - lambda:
+          name: Lava
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::LAVA, initial_run);
+      - lambda:
+          name: Drift
+          update_interval: 20ms
+          lambda: colorshadow::render(it, colorshadow::Scene::DRIFT, initial_run);
 
 output:
   - platform: ledc
