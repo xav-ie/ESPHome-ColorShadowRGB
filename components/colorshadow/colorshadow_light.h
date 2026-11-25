@@ -107,6 +107,7 @@ class ColorShadowLightOutput : public light::LightOutput {
   }
 
   void write_state(light::LightState *state) override {
+    state->current_values.as_rgb(&this->shown_[0], &this->shown_[1], &this->shown_[2]);
     float red, green, blue;
     state->current_values_as_rgb(&red, &green, &blue);
     this->red_->set_level(red);
@@ -114,7 +115,14 @@ class ColorShadowLightOutput : public light::LightOutput {
     this->blue_->set_level(blue);
   }
 
+  /// The red, green and blue levels last written to the LEDs, before gamma and
+  /// with brightness applied (all 0 while off). Starting an effect sets the
+  /// light's values to its target before the effect's first frame, so this is
+  /// the only record of what was actually showing.
+  const float *shown() const { return this->shown_; }
+
  protected:
+  float shown_[3]{0.0f, 0.0f, 0.0f};
   output::FloatOutput *red_;
   output::FloatOutput *green_;
   output::FloatOutput *blue_;

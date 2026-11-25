@@ -133,6 +133,7 @@ interval:
           static uint32_t anchor_ms = 0;
           static uint32_t moved_ms = 0;
           static LightColorValues written;
+          static uint32_t written_effect = 0;
 
           const float knob[3] = {id(red_knob).state, id(green_knob).state, id(blue_knob).state};
           for (float k : knob)
@@ -153,8 +154,9 @@ interval:
             rest();
             return;
           }
-          // Something else changed the light mid turn; it wins until the knobs move again.
-          if (turning && light->remote_values != written)
+          // Something else changed the light or started an effect mid turn; it wins
+          // until the knobs move again.
+          if (turning && (light->remote_values != written || light->get_current_effect_index() != written_effect))
             rest();
 
           bool moved = false;
@@ -190,6 +192,7 @@ interval:
           }
           call.perform();
           written = light->remote_values;
+          written_effect = light->get_current_effect_index();
 
 light:
   # The rgb platform with colour transitions that swing round the hue circle

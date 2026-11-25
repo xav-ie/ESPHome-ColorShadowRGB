@@ -138,13 +138,12 @@ inline void render(light::LightState &state, Scene scene, bool initial_run, floa
     event_ms = ms;
     flashes = 0;
     brightness = remote.get_brightness();
-    const light::LightColorValues &now = state.current_values;
-    // In the same units as the frames below, which the set brightness scales later.
-    const float level =
-        now.is_on() ? std::min(now.get_brightness() / std::max(brightness, 0.001f), 1.0f) : 0.0f;
-    before[0] = now.get_red() * level;
-    before[1] = now.get_green() * level;
-    before[2] = now.get_blue() * level;
+    // Fade in from what the LEDs last showed (dark from off, the last frame when
+    // switching effects), in the same units as the frames below, which the set
+    // brightness scales later.
+    const float *shown = static_cast<ColorShadowLightOutput *>(state.get_output())->shown();
+    for (int i = 0; i < 3; i++)
+      before[i] = brightness > 0.0f ? std::min(shown[i] / brightness, 1.0f) : 0.0f;
     for (int i = 0; i < 3; i++) {
       base[i] = target[i];
       scene_from[i] = scene_to[i] = before[i];
@@ -190,11 +189,16 @@ inline void render(light::LightState &state, Scene scene, bool initial_run, floa
       break;
     }
     case Scene::PULSE: {
-      // Base colour. A slow eased breath from near off up to the colour at the
-      // set brightness (never above it), each LED a little behind the last, so
-      // the shadows ripple as it swells.
-      for (int i = 0; i < 3; i++)
-        rgb[i] = base[i] * (0.18f + 0.82f * swell(cycle(ms + 6000u - 300u * i, 6000)));
+      // Base colour. A slow eased breath from near off up to exactly the colour
+      // at the set brightness. In the dim part each LED runs a little behind the
+      // last, so the shadows ripple, and the lag fades out towards the top so all
+      // three peak together and the colour holds its hue.
+      const float s = swell(cycle(ms, 6000));
+      for (int i = 0; i < 3; i++) {
+        const float lagged = swell(cycle(ms + 6000u - 300u * i, 6000));
+        const float si = s + (lagged - s) * (1.0f - s) * (1.0f - s);
+        rgb[i] = base[i] * (0.18f + 0.82f * si);
+      }
       break;
     }
     case Scene::TWINKLE: {
