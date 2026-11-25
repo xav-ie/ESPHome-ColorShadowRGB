@@ -23,7 +23,7 @@ packages:
 
 ## Physical controls
 - Button press toggles the lamp on and off.
-- Holding the button for 0.8 s steps to the next effect while still held, in the order of the effects list below, then back to none. From off it turns on with pulse.
+- Holding the button for 0.8 s steps to the next effect while still held, in the order of the effects list below, then back to none. From off it turns on with the first effect, Fire.
 - Each knob sets the absolute level of its LED, from off at the zero end to full at the other.
 
 ## How the knobs work
@@ -44,19 +44,24 @@ Hue rather than OKLab or OKLCH, because ESPHome already stores a colour as chann
 - Without one, the light fades over 1.5 s (`default_transition_length`).
 
 ## Effects
-In Home Assistant's effect list and the button's long press cycle, in this order. The new ones drive red, green and blue on their own smooth noise, so each LED's shadow moves independently, and fade in over 0.8 s from what the lamp showed. Home Assistant's brightness scales them, and the outputs' power cap bounds their peak.
+In Home Assistant's effect list and the button's long press cycle, in this order. They drive red, green and blue on their own smooth noise or curves, so each LED's shadow moves on its own, and fade in over 0.8 s from what the lamp showed. Home Assistant's brightness scales them all, and the outputs' power cap bounds their peak.
 
-- Pulse, Random, Flicker: ESPHome's built in effects.
-- Candle: a calm amber flame that sways and sometimes gutters.
-- Fire: flames flare together while the red and yellow shadows flicker against each other.
-- Icy Fire: a cold blue flame with cyan licks and white tips when all three peak.
-- Purple Fire: magenta flames, with the shadows splitting violet and pink.
-- Christmas: red and green trade places every few seconds, with an occasional soft white sparkle.
-- Aurora: slow green curtains over blue, with a faint violet edge now and then.
-- Ocean: deep blue with slow teal swells.
-- Sunset: a warm red sky drifting between orange and pink.
-- Lava: dark red that slowly surges brighter, glowing orange at the peaks.
-- Drift: every LED wanders over its whole range, so the shadows mix into ever changing colours.
+Effects marked *base colour* take their colour from the light's colour in Home Assistant. Changing the colour while one runs retints it live over about half a second without stopping it: ESPHome keeps an effect running through a colour change and stores the new colour in the light's remote values, which the effect follows. The others have a fixed palette.
+
+- Fire (*base colour*): the flame flares as a whole while each LED flickers on its own, cooling to deeper, darker embers of the base hue and peaking in white tips. Orange or amber is a wood fire, blue or white an icy fire, purple a purple fire.
+- Candle (*base colour*): the same flame, calm: a slow sway, a faint flicker and now and then a gutter that dips it for a few seconds.
+- Breathe (*base colour*): a slow eased breath every 6 s, each LED a little behind the last so the shadows ripple.
+- Twinkle (*base colour*): a soft glow where each LED swells into its own sparkle now and then, the brightest glinting white.
+- Waves (*base colour*): slow swells drifting a little either side of the base hue; blue makes an ocean.
+- Storm (*base colour*): a dim rumbling sky in the base colour, struck every 4 to 18 s by one to three lightning flashes, each LED at its own strength so the shadows split.
+- Shadow Dance: red, green and blue swell in turn, a third of an 8 s cycle apart, so each shadow steps forward in turn.
+- Rainbow: a slow, fully saturated trip round the colour wheel once a minute.
+- Party: a new colour on every beat at 120 beats a minute, eased over a quarter beat, with each beat's glow swelling and fading.
+- Christmas: red and green trade places every 9 s, with an occasional soft white sparkle.
+- Aurora: slow green curtains over blue with a faint violet edge.
+- TV Glow: a television's cool, flickering light with a quick cut to a new tint and level every 1 to 5 s, for presence simulation.
+- Sunrise: a wake light ramping from a dim deep red through orange to warm white over `ramp_minutes` (20), then holding.
+- Sunset: the same ramp backwards, down to a dim deep red, then holding there.
 
 ## Pins and outputs
 The LED pins below are verified on a lamp (pure red, green and blue each showed their own colour). All pins are substitutions at the top of `package.yaml`, so a lamp wired differently is a one line override in the device config:
